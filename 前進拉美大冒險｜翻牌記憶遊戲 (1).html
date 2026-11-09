@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>前進拉美大冒險｜翻牌記憶遊戲</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFF6E4; --ink:#2B1B17; --muted:#7A6258; --card:#FFFDF8; --line:#E8D6B8;
+  --mx:#C2185B; --pe:#0E7C7B; --gold:#F2A100; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#1E1512;--ink:#FBEFD9;--muted:#BFA796;--card:#2C201B;--line:#4A3830;--mx:#F06292;--pe:#4DB6AC;--gold:#FFC043;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#1E1512;--ink:#FBEFD9;--muted:#BFA796;--card:#2C201B;--line:#4A3830;--mx:#F06292;--pe:#4DB6AC;--gold:#FFC043;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.35;display:grid;place-items:center;overflow:hidden}
+.stage{width:min(100vw,calc(100dvh*16/9));aspect-ratio:16/9;container-type:size;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.banner{height:1.8cqw;display:flex;flex:none}
+.banner i{flex:1;clip-path:polygon(0 0,100% 0,100% 65%,50% 100%,0 65%)}
+.banner i:nth-child(4n+1){background:var(--mx)}.banner i:nth-child(4n+2){background:var(--gold)}
+.banner i:nth-child(4n+3){background:var(--pe)}.banner i:nth-child(4n){background:#E4572E}
+.main{flex:1;min-height:0;display:flex;flex-direction:column;padding:1cqw 2cqw 1.4cqw;gap:1cqw}
+.top{display:flex;align-items:center;gap:1.2cqw;flex:none}
+h1{font-size:2.5cqw;font-weight:900;margin:0;white-space:nowrap;letter-spacing:.02em}
+.modes{display:flex;gap:.7cqw}
+.mode{border:.2cqw solid var(--line);background:var(--card);color:var(--ink);border-radius:1cqw;padding:.5cqw 1.1cqw;font:inherit;font-weight:700;font-size:1.4cqw;cursor:pointer;white-space:nowrap}
+.mode[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,var(--card))}
+.mode[data-m="mx"]{--c:var(--mx)}.mode[data-m="pe"]{--c:var(--pe)}.mode[data-m="mix"]{--c:var(--gold)}
+.stats{display:flex;gap:.7cqw;margin-left:auto;font-weight:700;font-size:1.4cqw}
+.stat{background:var(--card);border:.1cqw solid var(--line);border-radius:.8cqw;padding:.4cqw 1cqw;white-space:nowrap}
+.ctl{display:flex;gap:.6cqw;align-items:center}
+.ctl button,.ctl select{font:inherit;font-weight:700;font-size:1.3cqw;border-radius:.8cqw;padding:.5cqw 1cqw;border:.15cqw solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer}
+.ctl .go{background:var(--ink);color:var(--bg)}
+.grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(var(--cols,8),1fr);grid-template-rows:repeat(2,1fr);gap:1cqw}
+.card{perspective:60cqw;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:inherit;min-height:0;min-width:0}
+.in{position:relative;width:100%;height:100%;transition:transform .45s;transform-style:preserve-3d}
+.card.open .in,.card.done .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:1.1cqw;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.4cqw;text-align:center}
+.back{background:repeating-linear-gradient(45deg,transparent 0 .9cqw,rgba(255,255,255,.16) .9cqw 1.1cqw),linear-gradient(160deg,var(--mx),var(--gold) 55%,var(--pe));border:.3cqw solid var(--card);font-size:3cqw;color:#fff}
+.front{transform:rotateY(180deg);background:var(--card);border:.3cqw solid var(--c)}
+.front .e{font-size:3.6cqw;line-height:1.1}
+.front .t{font-weight:900;font-size:2cqw;margin-top:.3cqw;word-break:keep-all}
+.front.clue .t{font-weight:700;font-size:1.5cqw;color:var(--muted);margin:0}
+.card.done .front{background:color-mix(in srgb,var(--c) 14%,var(--card))}
+.card:focus-visible{outline:.3cqw solid var(--gold);outline-offset:.2cqw}
+.fact{flex:none;height:4.4cqw;display:flex;align-items:center;gap:1cqw;padding:0 1.4cqw;border-left:.6cqw solid var(--gold);background:var(--card);border-radius:0 1cqw 1cqw 0;font-size:1.7cqw}
+.fact.pre{border-left-color:var(--mx);font-weight:900;font-size:2cqw}
+.fact .n{font-size:2.8cqw;color:var(--mx);min-width:3ch}
+.win{display:none;position:absolute;inset:0;background:rgba(0,0,0,.55);place-items:center;z-index:5}
+.win.show{display:grid}
+.win div{background:var(--card);border:.4cqw solid var(--gold);border-radius:2cqw;padding:3cqw 5cqw;text-align:center;font-size:2cqw}
+.win h2{margin:0 0 1cqw;font-size:4cqw}
+.win button{margin-top:1.5cqw;font:inherit;font-weight:700;font-size:1.8cqw;background:var(--ink);color:var(--bg);border:0;border-radius:1cqw;padding:.7cqw 2cqw;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.in{transition:none}}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="banner" aria-hidden="true"></div>
+  <div class="main">
+    <div class="top">
+      <h1>前進拉美大冒險</h1>
+      <div class="modes" role="group" aria-label="選擇關卡">
+        <button class="mode" data-m="mx" aria-pressed="true">🇲🇽 墨西哥</button>
+        <button class="mode" data-m="pe" aria-pressed="false">🇵🇪 祕魯</button>
+        <button class="mode" data-m="mix" aria-pressed="false">🌎 綜合</button>
+      </div>
+      <div class="stats">
+        <span class="stat">步數 <span id="moves">0</span></span>
+        <span class="stat">配對 <span id="pairs">0</span>/<span id="total">0</span></span>
+        <span class="stat">時間 <span id="time">0</span> 秒</span>
+      </div>
+      <div class="ctl">
+        <select id="pre" aria-label="預覽秒數"><option value="5">預覽 5 秒</option><option value="10" selected>預覽 10 秒</option><option value="20">預覽 20 秒</option><option value="30">預覽 30 秒</option></select>
+        <button id="skip" hidden>跳過預覽</button>
+        <button id="restart" class="go">重新洗牌</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="fact" id="fact" aria-live="polite"></div>
+  </div>
+  <div class="win" id="win" role="status"></div>
+</div>
+
+<script>
+// [國家, emoji, 題目, 答案, 小知識]
+var DATA = [
+ ['mx','🇲🇽','比臺灣大幾倍？','54倍','墨西哥的面積是臺灣的 54 倍大。'],
+ ['mx','🗣️','官方語言','西班牙語','墨西哥的官方語言是西班牙語。'],
+ ['mx','⛪','多數居民的信仰','天主教','居民多數信奉天主教；約 90% 是西班牙人與美洲原住民的混血。'],
+ ['mx','🛕','馬雅金字塔的階梯數','365階','四面加頂層神廟共 365 階，象徵一年的天數；頂部神廟用來祈求雨神與豐收。'],
+ ['mx','🌵','墨西哥國徽上的植物','仙人掌','墨西哥是「仙人掌王國」，有 500 多種原生品種。'],
+ ['mx','💀','10/31～11/2 的盛大節慶','亡靈節','死亡不是生命的終結，而是新生命的開始。'],
+ ['mx','🌼','亡靈節祭壇上的花','萬壽菊','亡靈節的元素還有蠟燭、小骷髏頭、亡靈麵包、剪紙和祭壇照片。'],
+ ['mx','👨‍👩‍👧','Familia','家人','西文通關密語：Familia ＝ 家人。'],
+ ['mx','✈️','臺灣飛到墨西哥','19–30小時','從臺灣到墨西哥要飛 19～30 小時。'],
+ ['pe','🦙','毛被譽為「會走路的黃金」','羊駝','全球超過 90% 的羊駝棲息在祕魯；羊駝臉圓、毛長，像有齊劉海。'],
+ ['pe','😠','防衛心重，生氣會吐口水','駱馬','駱馬體型高大、脖子較長，過去用來馱運貨物。'],
+ ['pe','🥔','超過 3,000 種原生品種','馬鈴薯','全球馬鈴薯的發源地，7000 年前就出現在祕魯。'],
+ ['pe','🏔️','1983 年列為世界遺產','馬丘比丘','印加帝國留下的巨石遺跡，也是世界新七大奇蹟之一。'],
+ ['pe','🧱','石頭貼合、完全不用灰泥','乾砌法','馬丘比丘用白花崗岩以乾砌法建造。'],
+ ['pe','📏','馬丘比丘的海拔','2430公尺','馬丘比丘位於安地斯山巔，海拔 2430 公尺。'],
+ ['pe','⛰️','Montaña','山','西文通關密語：Montaña ＝ 山。']
+];
+var COL = {mx:'var(--mx)', pe:'var(--pe)'};
+var grid=document.getElementById('grid'), factEl=document.getElementById('fact'), winEl=document.getElementById('win');
+var skipBtn=document.getElementById('skip');
+var mode='mx', first=null, lock=true, moves=0, found=0, total=0, secs=0, timer=null, preTimer=null;
+var HINT='配對成功後，這裡會出現課堂小知識。';
+
+var bn=document.querySelector('.banner'); for(var i=0;i<48;i++) bn.appendChild(document.createElement('i'));
+
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function best(){try{return JSON.parse(localStorage.getItem('latam-best')||'{}');}catch(e){return {};}}
+function saveBest(m){try{var o=best();if(!o[mode]||m<o[mode]){o[mode]=m;localStorage.setItem('latam-best',JSON.stringify(o));return true;}}catch(e){}return false;}
+function pick(){
+  var mx=shuffle(DATA.filter(function(d){return d[0]==='mx';}));
+  var pe=shuffle(DATA.filter(function(d){return d[0]==='pe';}));
+  if(mode==='mx')return mx.slice(0,8);
+  if(mode==='pe')return pe.slice(0,8);
+  return mx.slice(0,5).concat(pe.slice(0,5));
+}
+
+function start(){
+  clearInterval(timer);clearInterval(preTimer);timer=null;
+  secs=0;moves=0;found=0;first=null;lock=true;
+  document.getElementById('time').textContent=0;document.getElementById('moves').textContent=0;
+  var set=pick();total=set.length;
+  document.getElementById('total').textContent=total;document.getElementById('pairs').textContent=0;
+  winEl.className='win';
+  var cards=[];
+  set.forEach(function(d,i){
+    cards.push({id:i,c:d[0],e:d[1],t:d[2],clue:true,f:d[4]});
+    cards.push({id:i,c:d[0],e:d[1],t:d[3],clue:false,f:d[4]});
+  });
+  shuffle(cards);
+  grid.style.setProperty('--cols',cards.length/2);
+  grid.innerHTML='';
+  cards.forEach(function(c){
+    var el=document.createElement('button');
+    el.className='card open';el.type='button';el.setAttribute('aria-label','翻牌');
+    el.innerHTML='<div class="in"><div class="face back" aria-hidden="true">✦</div>'+
+      '<div class="face front '+(c.clue?'clue':'ans')+'" style="--c:'+COL[c.c]+'">'+
+      (c.clue?'':'<div class="e">'+c.e+'</div>')+'<div class="t">'+c.t+'</div></div></div>';
+    el.onclick=function(){flip(el,c);};
+    grid.appendChild(el);
+  });
+  preview();
+}
+
+function preview(){
+  var left=parseInt(document.getElementById('pre').value,10);
+  skipBtn.hidden=false;
+  function show(){factEl.className='fact pre';factEl.innerHTML='👀 記住牌的位置！<span class="n">'+left+'</span>秒後蓋牌';}
+  show();
+  preTimer=setInterval(function(){left--;if(left<=0)endPreview();else show();},1000);
+}
+function endPreview(){
+  clearInterval(preTimer);preTimer=null;skipBtn.hidden=true;
+  grid.querySelectorAll('.card').forEach(function(c){c.classList.remove('open');});
+  factEl.className='fact';factEl.textContent=HINT;lock=false;
+}
+
+function flip(el,c){
+  if(lock||el.classList.contains('open')||el.classList.contains('done'))return;
+  if(!timer)timer=setInterval(function(){secs++;document.getElementById('time').textContent=secs;},1000);
+  el.classList.add('open');
+  if(!first){first={el:el,c:c};return;}
+  moves++;document.getElementById('moves').textContent=moves;
+  var a=first;first=null;
+  if(a.c.id===c.id&&a.c.clue!==c.clue){
+    a.el.classList.replace('open','done');el.classList.replace('open','done');
+    found++;document.getElementById('pairs').textContent=found;
+    factEl.textContent='✔ '+c.f;
+    if(found===total)finish();
+  }else{
+    lock=true;
+    setTimeout(function(){a.el.classList.remove('open');el.classList.remove('open');lock=false;},900);
+  }
+}
+
+function finish(){
+  clearInterval(timer);timer=null;
+  var isBest=saveBest(moves);var bs=best()[mode];
+  winEl.innerHTML='<div><h2>🎉 全部配對成功！</h2>共 '+moves+' 步，花了 '+secs+' 秒'+(isBest?'（本機最佳紀錄！）':'')+
+    (bs?'<br>這個關卡的最少步數：'+bs+' 步':'')+'<br><button id="again">再玩一次</button></div>';
+  winEl.className='win show';
+  document.getElementById('again').onclick=start;
+}
+
+document.querySelectorAll('.mode').forEach(function(m){
+  m.onclick=function(){
+    document.querySelectorAll('.mode').forEach(function(x){x.setAttribute('aria-pressed',x===m);});
+    mode=m.dataset.m;start();
+  };
+});
+document.getElementById('restart').onclick=start;
+skipBtn.onclick=endPreview;
+start();
+</script>
+</body>
+</html>
